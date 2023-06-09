@@ -36,7 +36,6 @@ func init() {
 }
 
 func main() {
-    
     _, err := dg.ApplicationCommandBulkOverwrite(appID, guildID,
             []*discordgo.ApplicationCommand{
                 {
@@ -68,8 +67,6 @@ func main() {
             }
         }
     })
-    
-    dg.Identify.Intents = discordgo.IntentsGuildMessages
     
     // Open a websocket connection to Discord and begin listening.
     err = dg.Open()
