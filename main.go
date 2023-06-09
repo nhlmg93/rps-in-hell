@@ -10,32 +10,75 @@ import (
     "github.com/joho/godotenv"
 )
 
-func main() {
+
+var(
+    guildID string
+    appID string
+    token string
+    dg *discordgo.Session
+)
+
+func init() {
     err := godotenv.Load()
     if err != nil {
         fmt.Println("Error loading .env file")
     }
 
-    token := os.Getenv("TOKEN")
+    token = os.Getenv("TOKEN")
+    guildID = os.Getenv("GUILD_ID")
+    appID = os.Getenv("APP_ID")
     // Create a new Discord session using the provided bot token.
-    dg, err := discordgo.New("Bot " + token)
+    dg, err = discordgo.New("Bot " + token)
     if err != nil {
         fmt.Println("error creating Discord session,", err)
         return
     }
+}
 
-    // Register the messageCreate func as a callback for MessageCreate events.
-    dg.AddHandler(messageCreate)
+func main() {
+    
+    _, err := dg.ApplicationCommandBulkOverwrite(appID, guildID,
+            []*discordgo.ApplicationCommand{
+                {
+                    Name: "hello-world",
+                    Description: "Showcase of a basic slash command",
+                },
+            },
+        )
+    if err != nil {
+        fmt.Println(err) 
+        return
+    }
 
-    // In this example, we only care about receiving message events.
+    dg.AddHandler(func (s *discordgo.Session, i *discordgo.InteractionCreate) {
+        data := i.ApplicationCommandData()
+        switch data.Name {
+        case "hello-world":
+            err := s.InteractionRespond(
+                i.Interaction,
+                &discordgo.InteractionResponse {
+                    Type: discordgo.InteractionResponseChannelMessageWithSource,
+                    Data: &discordgo.InteractionResponseData {
+                        Content: "Hello world!",
+                    },
+                })
+            if err != nil {
+                fmt.Println(err)
+                return
+            }
+        }
+    })
+    
     dg.Identify.Intents = discordgo.IntentsGuildMessages
-
+    
     // Open a websocket connection to Discord and begin listening.
     err = dg.Open()
     if err != nil {
         fmt.Println("error opening connection,", err)
         return
     }
+
+    
 
     // Wait here until CTRL-C or other term signal is received.
     fmt.Println("Bot is now running. Press CTRL-C to exit.")
@@ -47,17 +90,3 @@ func main() {
     dg.Close() 
 }
 
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the authenticated bot has access to.
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-
-    // Ignore all messages created by the bot itself
-    // This isn't required in this specific example but it's a good practice.
-    if m.Author.ID == s.State.User.ID {
-        return
-    }
-
-    if m.Content == "!gopher" {
-
-    }
-}
