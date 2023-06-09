@@ -5,6 +5,7 @@ import (
     "os"
     "os/signal"
     "syscall"
+    "flag"
 
     "github.com/bwmarrin/discordgo"
     "github.com/joho/godotenv"
@@ -16,6 +17,7 @@ var(
     appID string
     token string
     dg *discordgo.Session
+    cmdUpd = flag.Bool("cmdupd", false, "deploy a cmd")
 )
 
 func init() {
@@ -27,6 +29,7 @@ func init() {
     token = os.Getenv("TOKEN")
     guildID = os.Getenv("GUILD_ID")
     appID = os.Getenv("APP_ID")
+
     // Create a new Discord session using the provided bot token.
     dg, err = discordgo.New("Bot " + token)
     if err != nil {
@@ -36,10 +39,20 @@ func init() {
 }
 
 func main() {
+    //clean up cmds
+    if *cmdUpd {
+        cmds, _ := dg.ApplicationCommands(appID,"")
+        for _, cmd := range cmds {
+            dg.ApplicationCommandDelete(appID, "", cmd.ID)
+        } 
+   
+        cmds, _ = dg.ApplicationCommands(appID,"")
+        fmt.Printf("\ncmd: %v\n", cmds)
+    }
     _, err := dg.ApplicationCommandBulkOverwrite(appID, guildID,
             []*discordgo.ApplicationCommand{
                 {
-                    Name: "hello-world",
+                    Name: "test",
                     Description: "Showcase of a basic slash command",
                 },
             },
@@ -52,7 +65,7 @@ func main() {
     dg.AddHandler(func (s *discordgo.Session, i *discordgo.InteractionCreate) {
         data := i.ApplicationCommandData()
         switch data.Name {
-        case "hello-world":
+        case "test":
             err := s.InteractionRespond(
                 i.Interaction,
                 &discordgo.InteractionResponse {
