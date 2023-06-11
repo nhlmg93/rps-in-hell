@@ -1,5 +1,13 @@
 package main
 
+// TODO:
+//  Drowdown with RPS options
+//  store RPS game away with callengers option
+//  display accept button on command being sent
+//  on accept display same challenge options dropdown
+//    if no one accepts after an hour remove stored challenge and message 
+//  calculate winner, remove from stored games, display winner in message
+//   
 import (
     "fmt"
     "os"
@@ -20,15 +28,11 @@ var(
     cmdUpd = flag.Bool("cmdupd", false, "deploy a cmd")
 )
 
-func init() {
-    err := godotenv.Load()
-    if err != nil {
-        fmt.Println("Error loading .env file")
-    }
 
-    token = os.Getenv("TOKEN")
-    guildID = os.Getenv("GUILD_ID")
-    appID = os.Getenv("APP_ID")
+func init() {
+    var err error
+
+    loadSecrets()
 
     // Create a new Discord session using the provided bot token.
     dg, err = discordgo.New("Bot " + token)
@@ -39,7 +43,6 @@ func init() {
 }
 
 func main() {
-    //clean up cmds
     if *cmdUpd {
         cmds, _ := dg.ApplicationCommands(appID,"")
         for _, cmd := range cmds {
@@ -52,8 +55,8 @@ func main() {
     _, err := dg.ApplicationCommandBulkOverwrite(appID, guildID,
             []*discordgo.ApplicationCommand{
                 {
-                    Name: "test",
-                    Description: "Showcase of a basic slash command",
+                    Name: "challenge",
+                    Description: "Start a hellish game of RPS",
                 },
             },
         )
@@ -61,19 +64,21 @@ func main() {
         fmt.Println(err) 
         return
     }
-
     dg.AddHandler(func (s *discordgo.Session, i *discordgo.InteractionCreate) {
         data := i.ApplicationCommandData()
         switch data.Name {
-        case "test":
-            err := s.InteractionRespond(
-                i.Interaction,
-                &discordgo.InteractionResponse {
-                    Type: discordgo.InteractionResponseChannelMessageWithSource,
-                    Data: &discordgo.InteractionResponseData {
-                        Content: "Hello world!",
-                    },
-                })
+        case "challenge":
+            var err error
+            //err := s.InteractionRespond(
+            //    i.Interaction,
+            //    &discordgo.InteractionResponse {
+            //        Type: discordgo.InteractionResponseChannelMessageWithSource,
+            //        Data: &discordgo.InteractionResponseData {
+            //            Content: "Hello world!",
+            //        },
+            //    })
+            
+
             if err != nil {
                 fmt.Println(err)
                 return
@@ -88,8 +93,6 @@ func main() {
         return
     }
 
-    
-
     // Wait here until CTRL-C or other term signal is received.
     fmt.Println("Bot is now running. Press CTRL-C to exit.")
     sc := make(chan os.Signal, 1)
@@ -98,5 +101,19 @@ func main() {
 
     // Cleanly close down the Discord session.
     dg.Close() 
+}
+
+func loadSecrets(){
+    err := godotenv.Load()
+    if err != nil {
+        fmt.Println("Error loading .env file")
+    }
+
+    token = os.Getenv("TOKEN")
+    guildID = os.Getenv("GUILD_ID")
+    appID = os.Getenv("APP_ID")
+}
+
+func removeCmds(){
 }
 
