@@ -5,18 +5,18 @@ package main
 //  store RPS game away with callengers option
 //  display accept button on command being sent
 //  on accept display same challenge options dropdown
-//    if no one accepts after an hour remove stored challenge and message 
+//    if no one accepts after an hour remove stored challenge and message
 //  calculate winner, remove from stored games, display winner in message
-//   
 import (
-    "fmt"
-    "os"
-    "os/signal"
-    "syscall"
-    "flag"
+	"flag"
+	"fmt"
+	"go/types"
+	"os"
+	"os/signal"
+	"syscall"
 
-    "github.com/bwmarrin/discordgo"
-    "github.com/joho/godotenv"
+	"github.com/bwmarrin/discordgo"
+	"github.com/joho/godotenv"
 )
 
 
@@ -30,9 +30,16 @@ var(
 
 
 func init() {
-    var err error
+    flag.Parse()
 
-    loadSecrets()
+    err := godotenv.Load()
+    if err != nil {
+        fmt.Println("Error loading .env file")
+    }
+
+    token = os.Getenv("TOKEN")
+    guildID = os.Getenv("GUILD_ID")
+    appID = os.Getenv("APP_ID")
 
     // Create a new Discord session using the provided bot token.
     dg, err = discordgo.New("Bot " + token)
@@ -57,6 +64,28 @@ func main() {
                 {
                     Name: "challenge",
                     Description: "Start a hellish game of RPS",
+                    Options: []*discordgo.ApplicationCommandOption{
+                        {
+                            Name: "object",
+                            Description: "Play your move with a fiery passion",
+                            Type: discordgo.ApplicationCommandOptionString,
+                            Required: true,
+                            Choices: []*discordgo.ApplicationCommandOptionChoice{
+                                {
+                                    Name: "Rock",
+                                    Value: 1,
+                                },
+                                {
+                                    Name: "Paper",
+                                    Value: 2,
+                                },
+                                {
+                                    Name: "Scissors",
+                                    Value: 3,
+                                },
+                            },
+                        },
+                    },
                 },
             },
         )
@@ -77,8 +106,6 @@ func main() {
             //            Content: "Hello world!",
             //        },
             //    })
-            
-
             if err != nil {
                 fmt.Println(err)
                 return
@@ -101,19 +128,5 @@ func main() {
 
     // Cleanly close down the Discord session.
     dg.Close() 
-}
-
-func loadSecrets(){
-    err := godotenv.Load()
-    if err != nil {
-        fmt.Println("Error loading .env file")
-    }
-
-    token = os.Getenv("TOKEN")
-    guildID = os.Getenv("GUILD_ID")
-    appID = os.Getenv("APP_ID")
-}
-
-func removeCmds(){
 }
 
