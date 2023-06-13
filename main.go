@@ -10,7 +10,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,6 +18,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type RPS struct {
+    P1 int
+    P2 int
+}
 
 var(
     guildID string
@@ -26,6 +29,7 @@ var(
     token string
     dg *discordgo.Session
     cmdUpd = flag.Bool("cmdupd", false, "deploy a cmd")
+    activeGames map[string]string = make(map[string]string)
 )
 
 
@@ -73,15 +77,15 @@ func main() {
                             Choices: []*discordgo.ApplicationCommandOptionChoice{
                                 {
                                     Name: "Rock",
-                                    Value: 1,
+                                    Value: "Rock",
                                 },
                                 {
                                     Name: "Paper",
-                                    Value: 2,
+                                    Value: "Paper",
                                 },
                                 {
                                     Name: "Scissors",
-                                    Value: 3,
+                                    Value: "Scissors",
                                 },
                             },
                         },
@@ -95,17 +99,23 @@ func main() {
     }
     dg.AddHandler(func (s *discordgo.Session, i *discordgo.InteractionCreate) {
         data := i.ApplicationCommandData()
+
         switch data.Name {
         case "challenge":
-            var err error
-            //err := s.InteractionRespond(
-            //    i.Interaction,
-            //    &discordgo.InteractionResponse {
-            //        Type: discordgo.InteractionResponseChannelMessageWithSource,
-            //        Data: &discordgo.InteractionResponseData {
-            //            Content: "Hello world!",
-            //        },
-            //    })
+            user := i.Member.User.ID
+            //TODO:
+            //  user should only be able to have one challenge at a time out
+            //  need some kind of message if they have a active game
+            activeGames[user] = data.Options[0].Value.(string)
+            err := s.InteractionRespond(
+                i.Interaction,
+                &discordgo.InteractionResponse {
+                    Type: discordgo.InteractionResponseChannelMessageWithSource,
+                    Data: &discordgo.InteractionResponseData {
+                        Content: fmt.Sprintf("Can you stand the heat? RPS challenge from <@%s>", user),
+                        //need a accept button
+                    },
+                })
             if err != nil {
                 fmt.Println(err)
                 return
