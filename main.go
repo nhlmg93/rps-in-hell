@@ -18,11 +18,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type RPS struct {
-    P1 int
-    P2 int
-}
-
 var(
     guildID string
     appID string
